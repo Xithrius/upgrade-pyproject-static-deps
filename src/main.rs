@@ -5,13 +5,16 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
-use parser::ProjectConfig;
-mod parser;
+
+use projects::ProjectConfig;
+
+mod dependencies;
+mod projects;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    // What pyproject this project should operate off of
+    // What pyproject file this project should operate off of
     pyproject: PathBuf,
 }
 
@@ -31,7 +34,15 @@ fn main() -> Result<()> {
 
     let pyproject_config = ProjectConfig::new(pyproject_path);
 
-    println!("Deps: {:?}", pyproject_config.project.dependencies);
+    let deps = pyproject_config.get_dependencies();
+
+    for dep in deps {
+        let upstream_version = dep.fetch_current_pypi_version();
+        println!(
+            "Dependency {:?} is version {:?}, upstream is {:?}",
+            dep.name, dep.version, upstream_version,
+        );
+    }
 
     Ok(())
 }
