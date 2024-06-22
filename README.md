@@ -1,3 +1,3 @@
-# rust-binary-project-template
+# upgrade-pyproject-static-deps
 
-A template for Rust binary projects.
+Interactively upgrading pyproject static dependencies (pdm, poetry, etc)

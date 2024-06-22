@@ -4,11 +4,15 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'rust-binary-project-template'",
+      "name": "Debug executable 'upgrade-pyproject-static-deps'",
       "cargo": {
-        "args": ["build", "--bin=rust-binary-project-template", "--package=rust-binary-project-template"],
+        "args": [
+          "build",
+          "--bin=upgrade-pyproject-static-deps",
+          "--package=upgrade-pyproject-static-deps"
+        ],
         "filter": {
-          "name": "rust-binary-project-template",
+          "name": "upgrade-pyproject-static-deps",
           "kind": "bin"
         }
       },
@@ -18,11 +22,16 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in executable 'rust-binary-project-template'",
+      "name": "Debug unit tests in executable 'upgrade-pyproject-static-deps'",
       "cargo": {
-        "args": ["test", "--no-run", "--bin=rust-binary-project-template", "--package=rust-binary-project-template"],
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=upgrade-pyproject-static-deps",
+          "--package=upgrade-pyproject-static-deps"
+        ],
         "filter": {
-          "name": "rust-binary-project-template",
+          "name": "upgrade-pyproject-static-deps",
           "kind": "bin"
         }
       },

@@ -1,19 +1,29 @@
 #![warn(clippy::nursery, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions, clippy::future_not_send)]
 
-use color_eyre::eyre::{Error, Result, WrapErr};
+use std::path::PathBuf;
 
-mod handlers;
-mod utils;
+use clap::Parser;
+use color_eyre::eyre::{eyre, Result};
 
-use crate::handlers::config::CompleteConfig;
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    // What pyproject this project should operate off of
+    pyproject: PathBuf,
+}
 
-fn main() -> Result<(), Error> {
-    color_eyre::install().unwrap();
+fn main() -> Result<()> {
+    let cli = Cli::parse();
 
-    let mut _config = CompleteConfig::new()
-        .wrap_err("Unable to read configuration file.")
-        .unwrap();
+    let pyproject_path = cli.pyproject;
 
-    std::process::exit(0)
+    if !pyproject_path.exists() || pyproject_path.file_name().unwrap() != "pyproject.toml" {
+        return Err(eyre!(
+            "`pyproject.toml` does not exist at the path {:?}",
+            pyproject_path.display()
+        ));
+    }
+
+    Ok(())
 }
