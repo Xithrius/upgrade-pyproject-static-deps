@@ -1,5 +1,3 @@
-use std::{fs, path::PathBuf};
-
 use color_eyre::eyre::Context;
 use serde::{Deserialize, Serialize};
 
@@ -16,11 +14,8 @@ pub struct ProjectAttributes {
 }
 
 impl ProjectConfig {
-    pub fn new(path: PathBuf) -> Self {
-        let toml_data = fs::read_to_string(path)
-            .wrap_err("Failed to read file to string.")
-            .unwrap();
-        let config: Self = toml::from_str(&toml_data)
+    pub fn new(raw_config: &str) -> Self {
+        let config: Self = toml::from_str(raw_config)
             .wrap_err("Failed to deserialize `pyproject.toml` file.")
             .unwrap();
 
@@ -39,5 +34,25 @@ impl ProjectConfig {
             .iter()
             .map(|v| ProjectDependency::new(v))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic = "missing field `dependencies`"]
+    fn test_parsing_invalid_pyproject_with_no_dependencies_attribute() {
+        let raw_config_str: &str = "[project]";
+        ProjectConfig::new(raw_config_str);
+    }
+
+    #[test]
+    fn test_parsing_empty_dependencies_returns_empty_vector() {
+        let raw_config_str: &str = "[project]\ndependencies=[]";
+        let config = ProjectConfig::new(raw_config_str);
+
+        assert!(config.get_dependencies().is_empty());
     }
 }

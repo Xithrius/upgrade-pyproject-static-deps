@@ -1,10 +1,10 @@
 #![warn(clippy::nursery, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions, clippy::future_not_send)]
 
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use clap::Parser;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{eyre, Context, Result};
 
 use projects::ProjectConfig;
 
@@ -25,14 +25,21 @@ fn main() -> Result<()> {
 
     let pyproject_path = cli.pyproject;
 
-    if !pyproject_path.exists() || pyproject_path.file_name().unwrap() != "pyproject.toml" {
+    if !(pyproject_path.exists()
+        && pyproject_path.is_file()
+        && pyproject_path.file_name().unwrap() == "pyproject.toml")
+    {
         return Err(eyre!(
             "`pyproject.toml` does not exist at the path {:?}",
             pyproject_path.display()
         ));
     }
 
-    let pyproject_config = ProjectConfig::new(pyproject_path);
+    let raw_pyproject_toml_str = fs::read_to_string(pyproject_path)
+        .wrap_err("Failed to read file to string.")
+        .unwrap();
+
+    let pyproject_config = ProjectConfig::new(raw_pyproject_toml_str.as_str());
 
     let deps = pyproject_config.get_dependencies();
 
