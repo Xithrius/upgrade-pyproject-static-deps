@@ -5,6 +5,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
+use parser::ProjectConfig;
+mod parser;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -14,6 +16,8 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
+    color_eyre::install().unwrap();
+
     let cli = Cli::parse();
 
     let pyproject_path = cli.pyproject;
@@ -24,6 +28,10 @@ fn main() -> Result<()> {
             pyproject_path.display()
         ));
     }
+
+    let pyproject_config = ProjectConfig::new(pyproject_path);
+
+    println!("Deps: {:?}", pyproject_config.project.dependencies);
 
     Ok(())
 }
