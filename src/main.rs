@@ -6,6 +6,7 @@ use std::{fs, path::PathBuf};
 use clap::Parser;
 use color_eyre::eyre::{eyre, Context, Result};
 
+use dependencies::ProjectDependency;
 use projects::ProjectConfig;
 
 mod dependencies;
@@ -39,17 +40,33 @@ fn main() -> Result<()> {
         .wrap_err("Failed to read file to string.")
         .unwrap();
 
-    let pyproject_config = ProjectConfig::new(raw_pyproject_toml_str.as_str());
+    let mut pyproject_config = ProjectConfig::new(raw_pyproject_toml_str.as_str());
 
-    let deps = pyproject_config.get_dependencies();
+    let deps: Vec<ProjectDependency> = pyproject_config
+        .get_dependencies()
+        .iter_mut()
+        .map(|d| {
+            let upstream_version = d.fetch_current_pypi_version();
 
-    for dep in deps {
-        let upstream_version = dep.fetch_current_pypi_version();
-        println!(
-            "Dependency {:?} is version {:?}, upstream is {:?}",
-            dep.name, dep.version, upstream_version,
-        );
-    }
+            if upstream_version > d.version {
+                println!("{} {} -> {}", d.raw_dependency, d.version, upstream_version);
+                d.version = upstream_version;
+            }
+
+            d.clone()
+        })
+        .collect();
+
+    let serialized_deps = deps
+        .iter()
+        .map(ProjectDependency::to_string)
+        .collect::<Vec<String>>();
+
+    pyproject_config.set_dependencies_vec(serialized_deps);
+
+    let serialized_config = toml::to_string(&pyproject_config).unwrap();
+
+    println!("{serialized_config}");
 
     Ok(())
 }

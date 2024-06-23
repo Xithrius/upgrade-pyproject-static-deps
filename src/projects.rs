@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::dependencies::ProjectDependency;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProjectConfig {
     project: ProjectAttributes,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProjectAttributes {
     dependencies: Vec<String>,
 }
@@ -20,6 +20,10 @@ impl ProjectConfig {
             .unwrap();
 
         config
+    }
+
+    pub fn set_dependencies_vec(&mut self, new_dependencies: Vec<String>) {
+        self.project.dependencies = new_dependencies;
     }
 
     #[allow(dead_code)]
