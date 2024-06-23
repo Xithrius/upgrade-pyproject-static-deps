@@ -10,9 +10,9 @@ Actions to complete the rewrite:
 
 1. Handling the file
 
-- [ ] Make sure that the `pyproject.toml` *file* exists
-- [ ] Load it all into memory
-- [ ] Take metadata of the file to make sure that it was not modified since it was last read
+- [x] Make sure that the `pyproject.toml` *file* exists
+- [x] Load it all into memory
+- [x] Take metadata of the file to make sure that it was not modified since it was last read
 
 2. Parsing sections/subsections
 

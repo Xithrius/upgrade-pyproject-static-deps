@@ -1,21 +1,25 @@
 #![warn(clippy::nursery, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions, clippy::future_not_send)]
 
+mod dependencies;
+mod files;
+mod parser;
+mod projects;
+mod sections;
+
 use std::{fs, path::PathBuf};
 
 use clap::Parser;
 use color_eyre::eyre::{eyre, Context, Result};
+use inquire::Confirm;
 
-use dependencies::ProjectDependency;
-use projects::ProjectConfig;
-
-mod dependencies;
-mod projects;
+use files::{get_modification_time, has_file_been_modified};
+use projects::ProjectConfigParser;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    // What pyproject file this project should operate off of
+    /// What pyproject file this application should operate off of
     pyproject: PathBuf,
 }
 
@@ -36,37 +40,35 @@ fn main() -> Result<()> {
         ));
     }
 
+    let last_checked_at = get_modification_time(pyproject_path.clone());
+
     let raw_pyproject_toml_str = fs::read_to_string(pyproject_path.clone())
         .wrap_err("Failed to read file to string.")
         .unwrap();
 
-    let mut pyproject_config = ProjectConfig::new(raw_pyproject_toml_str.as_str());
+    #[allow(unused_variables)]
+    let parsed_project_config = ProjectConfigParser::new(raw_pyproject_toml_str.as_str())
+        .wrap_err("Failed to parse `pyproject.toml`")
+        .unwrap();
 
-    let deps: Vec<ProjectDependency> = pyproject_config
-        .get_dependencies()
-        .iter_mut()
-        .map(|d| {
-            let upstream_version = d.fetch_current_pypi_version();
+    // This must go at the end of the function before writing
+    if let Some(pyproject_checked_at) = last_checked_at {
+        if has_file_been_modified(pyproject_path, pyproject_checked_at) {
+            // File has been modified since the time it was read into memory,
+            // user must choose if the current file should be overwritten.
+            let ans = Confirm::new("File has been modified since program started. Overwrite?")
+            .with_default(false)
+            .with_help_message(
+                "File metadata shows modification datetime comes after program startup datetime.",
+            )
+            .prompt()
+            .expect("Something went wrong with the confirmation prompt.");
 
-            if upstream_version > d.version {
-                println!("{} {} -> {}", d.raw_dependency, d.version, upstream_version);
-                d.version = upstream_version;
+            if !ans {
+                return Ok(());
             }
-
-            d.clone()
-        })
-        .collect();
-
-    let serialized_deps = deps
-        .iter()
-        .map(ProjectDependency::to_string)
-        .collect::<Vec<String>>();
-
-    pyproject_config.set_dependencies_vec(serialized_deps);
-
-    let serialized_config = toml::to_string(&pyproject_config).unwrap();
-
-    let _ = fs::write(pyproject_path, serialized_config.as_bytes());
+        }
+    }
 
     Ok(())
 }
