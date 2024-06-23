@@ -36,7 +36,7 @@ fn main() -> Result<()> {
         ));
     }
 
-    let raw_pyproject_toml_str = fs::read_to_string(pyproject_path)
+    let raw_pyproject_toml_str = fs::read_to_string(pyproject_path.clone())
         .wrap_err("Failed to read file to string.")
         .unwrap();
 
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 
     let serialized_config = toml::to_string(&pyproject_config).unwrap();
 
-    println!("{serialized_config}");
+    let _ = fs::write(pyproject_path, serialized_config.as_bytes());
 
     Ok(())
 }
